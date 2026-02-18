@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Hello World 单页面示例" />
+    <title>Hello World</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg0: #0b1020;
+        --bg1: #111a33;
+        --card: rgba(255, 255, 255, 0.08);
+        --cardBorder: rgba(255, 255, 255, 0.16);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.72);
+        --shadow: rgba(0, 0, 0, 0.35);
+        --primary0: #7c3aed;
+        --primary1: #22d3ee;
+        --focus: rgba(34, 211, 238, 0.5);
+        --radius: 18px;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg0: #f5f7ff;
+          --bg1: #eef2ff;
+          --card: rgba(255, 255, 255, 0.7);
+          --cardBorder: rgba(15, 23, 42, 0.1);
+          --text: rgba(15, 23, 42, 0.92);
+          --muted: rgba(15, 23, 42, 0.68);
+          --shadow: rgba(2, 6, 23, 0.18);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        color: var(--text);
+        background:
+          radial-gradient(1200px 900px at 12% 18%, rgba(124, 58, 237, 0.22), transparent 52%),
+          radial-gradient(1200px 900px at 88% 72%, rgba(34, 211, 238, 0.18), transparent 55%),
+          linear-gradient(180deg, var(--bg0), var(--bg1));
+        display: grid;
+        place-items: center;
+        padding: 28px 16px;
+      }
+
+      .shell {
+        width: min(920px, 100%);
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--cardBorder);
+        border-radius: var(--radius);
+        box-shadow:
+          0 22px 55px var(--shadow),
+          0 1px 0 rgba(255, 255, 255, 0.06) inset;
+        overflow: hidden;
+        backdrop-filter: blur(14px);
+      }
+
+      .header {
+        padding: 26px 24px 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: var(--muted);
+        font-size: 13px;
+        letter-spacing: 0.2px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--primary0), var(--primary1));
+        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+      }
+
+      h1 {
+        margin: 14px 0 8px;
+        font-size: clamp(30px, 4vw, 44px);
+        letter-spacing: -0.02em;
+        line-height: 1.12;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .content {
+        padding: 20px 24px 26px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      @media (min-width: 720px) {
+        .row {
+          grid-template-columns: 1.3fr 0.7fr;
+          align-items: center;
+        }
+      }
+
+      .panel {
+        padding: 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.08);
+      }
+
+      @media (prefers-color-scheme: light) {
+        .panel {
+          background: rgba(255, 255, 255, 0.38);
+        }
+      }
+
+      .greeting {
+        font-weight: 650;
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+
+      .meta {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+        word-break: break-word;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
+      @media (min-width: 720px) {
+        .actions {
+          justify-content: flex-end;
+        }
+      }
+
+      button {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        transition: transform 120ms ease, background 160ms ease, border-color 160ms ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.22);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .primary {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(34, 211, 238, 0.85));
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+
+      .primary:hover {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.96), rgba(34, 211, 238, 0.92));
+      }
+
+      .footer {
+        padding: 14px 24px 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+
+      .kbd {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        button {
+          transition: none;
+        }
+        button:hover {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="card" aria-labelledby="title">
+        <header class="header">
+          <div class="badge" title="纯静态单页：HTML + CSS + JS">
+            <span class="dot" aria-hidden="true"></span>
+            单页面 · Hello World
+          </div>
+          <h1 id="title">你好，世界。</h1>
+          <p class="subtitle">
+            一个干净的「Hello World」单页面示例：可直接双击打开，也可用本地服务器预览。
+          </p>
+        </header>
+
+        <div class="content">
+          <div class="row">
+            <div class="panel" role="status" aria-live="polite">
+              <p class="greeting" id="greeting">Hello, World!</p>
+              <p class="meta" id="meta">正在读取环境信息…</p>
+            </div>
+
+            <div class="actions" aria-label="操作">
+              <button class="primary" id="btn-random" type="button">换一句</button>
+              <button id="btn-copy" type="button">复制文本</button>
+              <button id="btn-refresh" type="button">刷新时间</button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <p class="hint">
+            快捷键：<span class="kbd">R</span> 刷新时间，<span class="kbd">C</span> 复制文本
+          </p>
+          <p class="hint" id="build">v1 · 静态单页</p>
+        </footer>
+      </section>
+    </main>
+
+    <script>
+      const greetingEl = document.getElementById("greeting");
+      const metaEl = document.getElementById("meta");
+      const btnRandom = document.getElementById("btn-random");
+      const btnCopy = document.getElementById("btn-copy");
+      const btnRefresh = document.getElementById("btn-refresh");
+
+      const greetings = [
+        "Hello, World!",
+        "你好，世界！",
+        "Bonjour le monde !",
+        "Hola, mundo!",
+        "Hallo, Welt!",
+        "Ciao, mondo!",
+        "こんにちは、世界！",
+        "안녕, 세상!",
+      ];
+
+      function nowText() {
+        const d = new Date();
+        return new Intl.DateTimeFormat("zh-CN", {
+          dateStyle: "full",
+          timeStyle: "medium",
+        }).format(d);
+      }
+
+      function refreshMeta() {
+        const lang = navigator.language || "unknown";
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown";
+        metaEl.textContent = `时间：${nowText()} · 语言：${lang} · 时区：${tz}`;
+      }
+
+      function randomGreeting() {
+        const idx = Math.floor(Math.random() * greetings.length);
+        greetingEl.textContent = greetings[idx];
+      }
+
+      async function copyGreeting() {
+        const text = greetingEl.textContent || "Hello, World!";
+        try {
+          await navigator.clipboard.writeText(text);
+          const prev = metaEl.textContent;
+          metaEl.textContent = `已复制：${text} · ${prev}`;
+          window.setTimeout(() => refreshMeta(), 900);
+        } catch {
+          const prev = metaEl.textContent;
+          metaEl.textContent = `复制失败（可能是直接打开文件限制剪贴板权限）。你可以手动选中复制：${text} · ${prev}`;
+        }
+      }
+
+      btnRandom.addEventListener("click", () => {
+        randomGreeting();
+        refreshMeta();
+      });
+      btnCopy.addEventListener("click", () => copyGreeting());
+      btnRefresh.addEventListener("click", () => refreshMeta());
+
+      window.addEventListener("keydown", (e) => {
+        if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+        if (e.key === "r" || e.key === "R") refreshMeta();
+        if (e.key === "c" || e.key === "C") copyGreeting();
+      });
+
+      randomGreeting();
+      refreshMeta();
+    </script>
+  </body>
+</html>
