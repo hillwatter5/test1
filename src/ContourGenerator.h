@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include <cfloat>
 
 /**
  * 等值线计算结果：一个等值级别对应的所有曲线
@@ -25,12 +26,32 @@ struct CContourLineResult
 
 /**
  * 填色计算结果：一个等值区间对应的所有多边形
+ *
+ * 对 N 个 levels，产生 N+1 个区间：
+ *   ColorIndex=0 : value < levels[0]
+ *   ColorIndex=k : levels[k-1] <= value < levels[k]  (1 <= k < N)
+ *   ColorIndex=N : value >= levels[N-1]
  */
 struct CFilledContourResult
 {
     float LevelLow;
     float LevelHigh;
+    int ColorIndex;
     std::vector<MPolygon> Polygons;
+
+    CFilledContourResult() : LevelLow(0), LevelHigh(0), ColorIndex(-1) {}
+};
+
+/**
+ * 合并计算结果：等值线 + 填色多边形
+ */
+struct CMergedResult
+{
+    /** N 个 level 对应 N 条等值线结果 */
+    std::vector<CContourLineResult> ContourLines;
+
+    /** N 个 level 对应 N+1 个填色区间结果，每个含 ColorIndex */
+    std::vector<CFilledContourResult> FilledContours;
 };
 
 /**
@@ -85,6 +106,19 @@ struct CEdgeKey
 };
 
 /**
+ * 边交点缓存条目：一条网格边在某个 level 上的交点
+ */
+struct CCachedIsect
+{
+    bool Has;
+    MPoint Pt;
+
+    CCachedIsect() : Has(false) {}
+};
+
+typedef std::pair<MPoint, MPoint> CSegPair;
+
+/**
  * 等值线和填色区间的核心计算引擎
  *
  * 基于 Marching Squares 算法：
@@ -112,21 +146,29 @@ public:
                     const float* values);
 
     /**
-     * 计算等值线
-     * @param levels   等值级别数组
-     * @param numLevels 级别数
-     * @return 每个级别对应的等值线结果
+     * 仅计算等值线（N 个 level → N 组曲线）
      */
     std::vector<CContourLineResult> ComputeContourLines(
         const float* levels, int numLevels);
 
     /**
-     * 计算填色多边形
-     * @param levels   等值级别数组（从小到大排列）
-     * @param numLevels 级别数，产生 numLevels-1 个填色区间
-     * @return 每个区间对应的填色结果
+     * 仅计算填色多边形（N 个 level → N+1 个区间）
+     * 区间规则：
+     *   [0] value < levels[0]        (ColorIndex=0)
+     *   [k] levels[k-1] <= value < levels[k]  (ColorIndex=k)
+     *   [N] value >= levels[N-1]     (ColorIndex=N)
      */
     std::vector<CFilledContourResult> ComputeFilledContours(
+        const float* levels, int numLevels);
+
+    /**
+     * 合并计算等值线与填色多边形（性能优化：单次网格遍历 + 边交点缓存）
+     *
+     * 相比分别调用 ComputeContourLines + ComputeFilledContours：
+     *   - 每个单元格的 4 角值和坐标只读取一次（减少 ~50% 内存访问）
+     *   - 同一网格边的交点计算一次、等值线和填色共享（减少重复插值）
+     */
+    CMergedResult ComputeContourAndFill(
         const float* levels, int numLevels);
 
 private:
@@ -136,50 +178,37 @@ private:
     std::vector<float> _yCoords;
     std::vector<float> _values;
 
-    /** 获取网格值 value[row][col] */
     float GetValue(int row, int col) const;
-
-    /** 获取网格点坐标 */
     MPoint GetGridPoint(int row, int col) const;
-
-    /** 线性插值：在两点之间找到等值点 */
     MPoint Interpolate(const MPoint& p1, float v1,
                        const MPoint& p2, float v2,
                        float level) const;
 
-    /**
-     * Marching Squares 核心：计算单元格内的等值线段
-     * 一个单元格最多产生 2 条线段（鞍点时）
-     */
     void ComputeCellSegments(
         int row, int col, float level,
-        std::vector<std::pair<MPoint, MPoint>>& segments) const;
+        std::vector<CSegPair>& segments) const;
 
-    /** 将散乱线段链接为连续多段线 */
     std::vector<MCurve> ChainSegments(
-        std::vector<std::pair<MPoint, MPoint>>& segments) const;
+        std::vector<CSegPair>& segments) const;
 
-    /**
-     * 计算单元格内填色区间 [levelLow, levelHigh) 的有向多边形边
-     * 沿单元格边界行走，收集处于"区间内"的顶点和插值交点
-     */
     void ComputeCellFillEdges(
         int row, int col,
         float levelLow, float levelHigh,
-        std::vector<std::pair<MPoint, MPoint>>& edges) const;
+        std::vector<CSegPair>& edges) const;
 
-    /** 对消相邻单元格共享的反向边 */
     void CancelOpposingEdges(
-        std::vector<std::pair<MPoint, MPoint>>& edges,
-        std::vector<std::pair<MPoint, MPoint>>& remaining) const;
+        std::vector<CSegPair>& edges,
+        std::vector<CSegPair>& remaining) const;
 
-    /** 将剩余有向边追踪为闭合环 */
     std::vector<MRing> TraceRings(
-        std::vector<std::pair<MPoint, MPoint>>& edges) const;
+        std::vector<CSegPair>& edges) const;
 
-    /** 按有符号面积分类外环/内环，并归组为 MPolygon */
     std::vector<MPolygon> GroupRingsToPolygons(
         std::vector<MRing>& rings) const;
+
+    /** 对一个区间的有向边做后处理：对消→追踪→归组 */
+    std::vector<MPolygon> AssemblePolygonsFromEdges(
+        std::vector<CSegPair>& edges) const;
 };
 
 #endif // CONTOURGENERATOR_H
